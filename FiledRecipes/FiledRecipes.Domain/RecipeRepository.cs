@@ -127,5 +127,77 @@ namespace FiledRecipes.Domain
                 handler(this, e);
             }
         }
+        public virtual void Load()
+        {
+            //The list for the recipes.
+            List<IRecipe> recipes = new List<IRecipe>();
+
+
+            //Enum for all types in a recipe.
+            RecipeReadStatus status = RecipeReadStatus.Indefinite;
+
+            //
+            Recipe recipe = null;
+
+
+
+            StreamReader readRecipe = new StreamReader("App_Data/recipes.txt");
+
+            string line;
+
+            while ((line = readRecipe.ReadLine()) != null)
+            {
+                if (line == SectionRecipe)
+                {
+                    status = RecipeReadStatus.New;
+                }
+                else if (line == SectionIngredients)
+                {
+                    status = RecipeReadStatus.Ingredient;
+                }
+                else if (line == SectionInstructions)
+                {
+                    status = RecipeReadStatus.Instruction;
+                }
+                else
+                {
+                    if (status == RecipeReadStatus.New)
+                    {
+                        //Create a new recipe-object.
+                        recipe = new Recipe(line);
+                        recipes.Add(recipe);
+                    }
+                    else if (status == RecipeReadStatus.Ingredient)
+                    {
+                        //Create a new ingredient array.
+                        string[] ingredients = line.Split(';');
+
+                        if (ingredients.Length != 3)
+                        {
+                            throw new FileFormatException();
+                        }
+
+                        //Create new Ingredient object.
+                        Ingredient ingredient = new Ingredient();
+                        
+                        //Adding ingredient to array.
+                        ingredient.Amount = ingredients[0];
+                        ingredient.Measure = ingredients[1];
+                        ingredient.Name = ingredients[2];
+
+                        //Adding the array to the recipe.
+                        recipe.Add(ingredient);
+
+                   
+                    }
+                    
+                }
+            }
+        }
+        public void Save()
+        {
+
+        }
     }
+
 }
