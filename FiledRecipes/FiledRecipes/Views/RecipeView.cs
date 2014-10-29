@@ -16,12 +16,41 @@ namespace FiledRecipes.Views
     
         public void Show(IRecipe recipe)
         {
- 	        throw new NotImplementedException();
+            //Show Header
+            Header = recipe.Name;
+            ShowHeaderPanel();
+            
+            //Makes a gap between header and ingredients.
+            Console.WriteLine();
+            Console.WriteLine("Ingredienser");
+            Console.WriteLine("------------");
+            Console.WriteLine();
+            //Write out Ingredients
+            foreach (Ingredient showIngredients in recipe.Ingredients)
+            {
+                Console.WriteLine(showIngredients);
+            }
+            //Gap and write out intructionts.
+            Console.WriteLine();
+            Console.WriteLine("Instruktioner");
+            Console.WriteLine("-------------");
+            
+            foreach (string showInstruction in recipe.Instructions)
+            {
+                Console.WriteLine(showInstruction);
+            }
         }
 
         public void Show(IEnumerable<IRecipe> recipes)
         {
- 	        throw new NotImplementedException();
+            foreach (var showAllRecipes in recipes)
+            {
+            Show(showAllRecipes);
+            ContinueOnKeyPressed();
+            }
+            
+                
         }
+        
         }
 }
