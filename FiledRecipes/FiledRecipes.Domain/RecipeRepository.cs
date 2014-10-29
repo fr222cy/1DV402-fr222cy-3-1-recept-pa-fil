@@ -129,6 +129,7 @@ namespace FiledRecipes.Domain
         }
         public virtual void Load()
         {
+
             //The list for the recipes.
             List<IRecipe> recipes = new List<IRecipe>();
 
@@ -139,64 +140,112 @@ namespace FiledRecipes.Domain
             //
             Recipe recipe = null;
 
+            
 
+            using (StreamReader readRecipe = new StreamReader(_path))
+            { 
 
-            StreamReader readRecipe = new StreamReader("App_Data/recipes.txt");
-
+                 
             string line;
 
             while ((line = readRecipe.ReadLine()) != null)
             {
-                if (line == SectionRecipe)
+                // If line isnt empty
+                if (line !="")
                 {
-                    status = RecipeReadStatus.New;
-                }
-                else if (line == SectionIngredients)
-                {
-                    status = RecipeReadStatus.Ingredient;
-                }
-                else if (line == SectionInstructions)
-                {
-                    status = RecipeReadStatus.Instruction;
-                }
-                else
-                {
-                    if (status == RecipeReadStatus.New)
-                    {
-                        //Create a new recipe-object.
-                        recipe = new Recipe(line);
-                        recipes.Add(recipe);
-                    }
-                    else if (status == RecipeReadStatus.Ingredient)
-                    {
-                        //Create a new ingredient array.
-                        string[] ingredients = line.Split(';');
 
-                        if (ingredients.Length != 3)
+                    if (line == SectionRecipe)
+                    {
+                        status = RecipeReadStatus.New;
+                    }
+                    else if (line == SectionIngredients)
+                    {
+                        status = RecipeReadStatus.Ingredient;
+                    }
+                    else if (line == SectionInstructions)
+                    {
+                        status = RecipeReadStatus.Instruction;
+                    }
+                    else
+                    {
+                        if (status == RecipeReadStatus.New)
+                        {
+                            //Create a new recipe-object.
+                            recipe = new Recipe(line);
+                            recipes.Add(recipe);
+                        }
+                        else if (status == RecipeReadStatus.Ingredient)
+                        {
+                            //Create a new ingredient array.
+                            string[] ingredients = line.Split(';');
+
+                            if (ingredients.Length != 3)
+                            {
+                                throw new FileFormatException();
+                            }
+
+                            //Create new Ingredient object.
+                            Ingredient ingredient = new Ingredient();
+
+                            //Adding ingredient to array.
+                            ingredient.Amount = ingredients[0];
+                            ingredient.Measure = ingredients[1];
+                            ingredient.Name = ingredients[2];
+
+                            //Adding the array to the recipe.
+                            recipe.Add(ingredient);
+                        }
+                        else if (status == RecipeReadStatus.Instruction)
+                        {
+                            recipe.Add(line);
+                        }
+
+                        else
                         {
                             throw new FileFormatException();
                         }
 
-                        //Create new Ingredient object.
-                        Ingredient ingredient = new Ingredient();
-                        
-                        //Adding ingredient to array.
-                        ingredient.Amount = ingredients[0];
-                        ingredient.Measure = ingredients[1];
-                        ingredient.Name = ingredients[2];
+                        //Sort the list using orderby.
+                        _recipes = recipes.OrderBy(r => r.Name).ToList();
+                        //Set the value as unchanged.
+                        IsModified = false;
 
-                        //Adding the array to the recipe.
-                        recipe.Add(ingredient);
-
-                   
+                        OnRecipesChanged(EventArgs.Empty);
                     }
-                    
                 }
             }
-        }
-        public void Save()
+         }
+      }
+        public virtual void Save()
         {
+            // Open Recipe File using Streamwriter.
+            using (StreamWriter writeRecipe = new StreamWriter(_path))
+            {
+                //Show all recipes.
+               foreach(var recipe in _recipes)
+               {
 
+                   writeRecipe.WriteLine(SectionRecipe);
+                   writeRecipe.WriteLine(recipe.Name);
+                   writeRecipe.WriteLine(SectionIngredients);
+
+                   foreach (var ingredient in recipe.Ingredients)
+                   {
+                       writeRecipe.WriteLine("{0};{1};{2}", SectionRecipe, SectionIngredients, SectionInstructions);
+                   }
+
+                   writeRecipe.WriteLine(SectionInstructions);
+                   foreach (var instruction in recipe.Instructions)
+                   {
+                       writeRecipe.WriteLine(instruction);
+                   }
+      
+               }
+               //Set the value as unchanged.
+               IsModified = false;
+
+               OnRecipesChanged(EventArgs.Empty);
+            }
         }
     }
 
